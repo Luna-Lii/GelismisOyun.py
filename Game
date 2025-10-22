@@ -1,0 +1,120 @@
+import pygame
+import random
+import sys
+
+# Pygame başlat
+pygame.init()
+
+# Ekran ayarları
+WIDTH, HEIGHT = 600, 400
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Zorluk + Skor Oyunu")
+
+# Renkler
+RED = (200, 0, 0)
+BLUE = (0, 0, 200)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Oyuncu
+player_size = 40
+player_speed = 5
+
+# Düşman
+enemy_size = 40
+
+# Saat
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 40)
+
+# Zorluk ayarları
+difficulties = {
+    "Kolay": 3,
+    "Orta": 6,
+    "Zor": 10,
+    "İmkansız": 20
+}
+
+def draw_text(text, y, center=True):
+    render = font.render(text, True, BLACK)
+    rect = render.get_rect(center=(WIDTH//2, y)) if center else render.get_rect(topleft=(10, y))
+    screen.blit(render, rect)
+
+def menu():
+    choosing = True
+    choice = None
+    while choosing:
+        screen.fill(WHITE)
+        draw_text("Zorluk Seç:", 80)
+        draw_text("1 - Kolay", 140)
+        draw_text("2 - Orta", 190)
+        draw_text("3 - Zor", 240)
+        draw_text("4 - İmkansız", 290)
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    choice = "Kolay"
+                elif event.key == pygame.K_2:
+                    choice = "Orta"
+                elif event.key == pygame.K_3:
+                    choice = "Zor"
+                elif event.key == pygame.K_4:
+                    choice = "İmkansız"
+                if choice:
+                    choosing = False
+    return difficulties[choice]
+
+def game(enemy_speed):
+    player = pygame.Rect(WIDTH//2, HEIGHT-60, player_size, player_size)
+    enemy = pygame.Rect(random.randint(0, WIDTH-enemy_size), 0, enemy_size, enemy_size)
+
+    score = 0
+    running = True
+    while running:
+        clock.tick(30)  # FPS
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and player.x > 0:
+            player.x -= player_speed
+        if keys[pygame.K_RIGHT] and player.x < WIDTH-player_size:
+            player.x += player_speed
+        if keys[pygame.K_UP] and player.y > 0:
+            player.y -= player_speed
+        if keys[pygame.K_DOWN] and player.y < HEIGHT-player_size:
+            player.y += player_speed
+
+        # Düşman hareketi
+        enemy.y += enemy_speed
+        if enemy.y > HEIGHT:
+            enemy.y = 0
+            enemy.x = random.randint(0, WIDTH-enemy_size)
+            score += 1  # puan kazan
+
+        # Çarpışma
+        if player.colliderect(enemy):
+            print(f"Oyun bitti! Skorun: {score}")
+            running = False
+
+        # Çizim
+        screen.fill(WHITE)
+        pygame.draw.rect(screen, RED, player)
+        pygame.draw.rect(screen, BLUE, enemy)
+        # Skor göster
+        score_text = font.render(f"Skor: {score}", True, BLACK)
+        screen.blit(score_text, (10, 10))
+        pygame.display.flip()
+
+    pygame.quit()
+    sys.exit()
+
+if __name__ == "__main__":
+    speed = menu()
+    game(speed)
